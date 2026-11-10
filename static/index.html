@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tareas del equipo</title>
+<style>
+  :root {
+    --fondo: #f4f1ea; --papel: #fffdf8; --tinta: #1f1d1a; --suave: #6f6a61;
+    --linea: #e2ddd2; --acento: #d9502b; --acento-claro: #fbe6dd; --ok: #2f7d4f;
+    --radio: 14px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--fondo); color: var(--tinta);
+    font: 16px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  main { max-width: 760px; margin: 0 auto; padding: 40px 20px 80px; }
+
+  header { display: flex; align-items: end; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 28px; }
+  h1 { font-size: 40px; line-height: 1; margin: 0; letter-spacing: -0.03em; }
+  h1 span { color: var(--acento); }
+  .meta { display: flex; align-items: center; gap: 14px; font-size: 14px; color: var(--suave); }
+  .vivo { display: inline-flex; align-items: center; gap: 6px; }
+  .vivo::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 0 0 rgba(47,125,79,.5); animation: pulso 2s infinite; }
+  .vivo.caido::before { background: var(--acento); animation: none; }
+  @keyframes pulso { 70% { box-shadow: 0 0 0 7px rgba(47,125,79,0); } 100% { box-shadow: 0 0 0 0 rgba(47,125,79,0); } }
+  a { color: var(--tinta); }
+
+  .tarjeta { background: var(--papel); border: 1px solid var(--linea); border-radius: var(--radio); }
+
+  form.nueva { padding: 18px; display: grid; grid-template-columns: 1fr 160px; gap: 10px; margin-bottom: 24px; }
+  form.nueva .ancho { grid-column: 1 / -1; }
+  input, textarea {
+    width: 100%; font: inherit; color: inherit; background: #fff;
+    border: 1px solid var(--linea); border-radius: 10px; padding: 10px 12px;
+  }
+  textarea { resize: vertical; min-height: 44px; }
+  input:focus, textarea:focus { outline: 2px solid var(--acento); outline-offset: -1px; border-color: transparent; }
+  #titulo { font-size: 18px; font-weight: 600; }
+  button {
+    font: inherit; cursor: pointer; border-radius: 10px; border: 1px solid var(--linea);
+    background: #fff; color: var(--tinta); padding: 8px 14px;
+  }
+  button.principal { background: var(--tinta); color: #fff; border-color: var(--tinta); font-weight: 600; }
+  button.principal:hover { background: var(--acento); border-color: var(--acento); }
+  button:disabled { opacity: .5; cursor: default; }
+
+  .filtros { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
+  .filtros button { border-radius: 999px; padding: 6px 14px; font-size: 14px; }
+  .filtros button[aria-pressed="true"] { background: var(--tinta); color: #fff; border-color: var(--tinta); }
+  .filtros b { font-weight: 600; opacity: .7; margin-left: 4px; }
+
+  ul { list-style: none; margin: 0; padding: 0; }
+  li.tarea { display: grid; grid-template-columns: 28px 1fr auto; gap: 12px; align-items: start; padding: 16px 18px; border-top: 1px solid var(--linea); }
+  li.tarea:first-child { border-top: 0; }
+  li.tarea.hecha .t-titulo { text-decoration: line-through; color: var(--suave); }
+  .check {
+    width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--linea); background: #fff;
+    padding: 0; margin-top: 2px; display: grid; place-items: center; color: #fff; font-size: 14px;
+  }
+  .check:hover { border-color: var(--ok); }
+  li.hecha .check { background: var(--ok); border-color: var(--ok); }
+  .t-titulo { font-weight: 600; word-break: break-word; }
+  .t-desc { color: var(--suave); margin-top: 2px; white-space: pre-wrap; word-break: break-word; }
+  .t-meta { font-size: 13px; color: var(--suave); margin-top: 6px; }
+  .chip { display: inline-block; background: var(--acento-claro); color: var(--acento); border-radius: 999px; padding: 0 8px; font-weight: 600; margin-right: 6px; }
+  .acciones { display: flex; gap: 4px; opacity: .35; transition: opacity .15s; }
+  li.tarea:hover .acciones, li.tarea:focus-within .acciones { opacity: 1; }
+  .acciones button { border: 0; background: transparent; padding: 4px 8px; font-size: 14px; color: var(--suave); }
+  .acciones button:hover { color: var(--acento); }
+  .editar { display: grid; gap: 8px; }
+  .editar .botones { display: flex; gap: 8px; }
+
+  .vacio { padding: 48px 20px; text-align: center; color: var(--suave); }
+  #aviso {
+    position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%) translateY(120px);
+    background: var(--tinta); color: #fff; padding: 10px 18px; border-radius: 10px; transition: transform .25s; max-width: 90vw;
+  }
+  #aviso.visible { transform: translateX(-50%) translateY(0); }
+  #aviso.error { background: var(--acento); }
+
+  @media (max-width: 560px) {
+    h1 { font-size: 32px; }
+    form.nueva { grid-template-columns: 1fr; }
+    .acciones { opacity: 1; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Tareas<span>.</span></h1>
+    <div class="meta">
+      <span id="conexion" class="vivo">En directo</span>
+      <a href="/docs" target="_blank">Documentación API</a>
+    </div>
+  </header>
+
+  <form class="nueva tarjeta" id="form-nueva" autocomplete="off">
+    <input id="titulo" class="ancho" placeholder="¿Qué hay que hacer?" required maxlength="120">
+    <textarea id="descripcion" placeholder="Descripción (opcional)" rows="1"></textarea>
+    <input id="autor" placeholder="Tu nombre" maxlength="40">
+    <button class="principal ancho" type="submit">Añadir tarea</button>
+  </form>
+
+  <div class="filtros" role="group" aria-label="Filtrar tareas">
+    <button data-filtro="todas" aria-pressed="true">Todas<b id="n-todas">0</b></button>
+    <button data-filtro="pendientes" aria-pressed="false">Pendientes<b id="n-pendientes">0</b></button>
+    <button data-filtro="completadas" aria-pressed="false">Completadas<b id="n-completadas">0</b></button>
+  </div>
+
+  <ul id="lista" class="tarjeta"></ul>
+</main>
+<div id="aviso" role="status"></div>
+
+<script>
+  // La interfaz la sirve la propia API, así que las llamadas van al mismo servidor.
+  const API = "";
+  const CABECERAS = { "Content-Type": "application/json", "ngrok-skip-browser-warning": "true" };
+  const REFRESCO_MS = 5000;   // se recarga sola para ver los cambios de los compañeros
+
+  let tareas = [];
+  let filtro = "todas";
+  let editando = null;        // id de la tarea en edición (pausa el refresco de esa fila)
+
+  const $ = (sel) => document.querySelector(sel);
+  const escapar = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+
+  async function api(ruta, opciones = {}) {
+    const r = await fetch(API + ruta, { ...opciones, headers: CABECERAS });
+    if (!r.ok) {
+      let detalle = r.statusText;
+      try { const j = await r.json(); detalle = typeof j.detail === "string" ? j.detail : "Datos no válidos"; } catch {}
+      throw new Error(detalle);
+    }
+    return r.json();
+  }
+
+  function avisar(texto, error = false) {
+    const el = $("#aviso");
+    el.textContent = texto;
+    el.className = "visible" + (error ? " error" : "");
+    clearTimeout(avisar.t);
+    avisar.t = setTimeout(() => (el.className = ""), 2500);
+  }
+
+  async function cargar() {
+    try {
+      tareas = await api("/tareas");
+      $("#conexion").className = "vivo";
+      $("#conexion").textContent = "En directo";
+      pintar();
+    } catch {
+      $("#conexion").className = "vivo caido";
+      $("#conexion").textContent = "Sin conexión";
+    }
+  }
+
+  function fechaBonita(iso) {
+    const d = new Date(iso);
+    return d.toLocaleString("es-ES", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+  }
+
+  function pintar() {
+    const pendientes = tareas.filter((t) => !t.completada);
+    $("#n-todas").textContent = tareas.length;
+    $("#n-pendientes").textContent = pendientes.length;
+    $("#n-completadas").textContent = tareas.length - pendientes.length;
+
+    const visibles = tareas
+      .filter((t) => filtro === "todas" || (filtro === "pendientes" ? !t.completada : t.completada))
+      .sort((a, b) => a.completada - b.completada || b.id - a.id);
+
+    if (!visibles.length) {
+      $("#lista").innerHTML = `<li class="vacio">${tareas.length ? "No hay tareas en este filtro." : "Aún no hay tareas. ¡Crea la primera!"}</li>`;
+      return;
+    }
+
+    $("#lista").innerHTML = visibles.map((t) => editando === t.id ? filaEdicion(t) : `
+      <li class="tarea ${t.completada ? "hecha" : ""}" data-id="${t.id}">
+        <button class="check" data-accion="alternar" aria-label="${t.completada ? "Marcar como pendiente" : "Marcar como completada"}">${t.completada ? "✓" : ""}</button>
+        <div>
+          <div class="t-titulo">${escapar(t.titulo)}</div>
+          ${t.descripcion ? `<div class="t-desc">${escapar(t.descripcion)}</div>` : ""}
+          <div class="t-meta">${t.autor ? `<span class="chip">${escapar(t.autor)}</span>` : ""}#${t.id} · ${fechaBonita(t.creada)}</div>
+        </div>
+        <div class="acciones">
+          <button data-accion="editar">Editar</button>
+          <button data-accion="borrar">Borrar</button>
+        </div>
+      </li>`).join("");
+  }
+
+  function filaEdicion(t) {
+    return `
+      <li class="tarea" data-id="${t.id}">
+        <span></span>
+        <form class="editar" data-accion="guardar">
+          <input name="titulo" value="${escapar(t.titulo)}" required maxlength="120">
+          <textarea name="descripcion" rows="2" placeholder="Descripción">${escapar(t.descripcion)}</textarea>
+          <input name="autor" value="${escapar(t.autor)}" placeholder="Autor" maxlength="40">
+          <div class="botones">
+            <button class="principal" type="submit">Guardar</button>
+            <button type="button" data-accion="cancelar">Cancelar</button>
+          </div>
+        </form>
+        <span></span>
+      </li>`;
+  }
+
+  // Crear
+  $("#form-nueva").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const boton = e.target.querySelector("button");
+    const autor = $("#autor").value.trim();
+    try { localStorage.setItem("autor", autor); } catch {}
+    boton.disabled = true;
+    try {
+      await api("/tareas", { method: "POST", body: JSON.stringify({
+        titulo: $("#titulo").value.trim(),
+        descripcion: $("#descripcion").value.trim() || null,
+        autor: autor || null,
+      }) });
+      $("#titulo").value = ""; $("#descripcion").value = "";
+      $("#titulo").focus();
+      avisar("Tarea creada");
+      await cargar();
+    } catch (err) { avisar("No se pudo crear: " + err.message, true); }
+    finally { boton.disabled = false; }
+  });
+
+  // Acciones de la lista (completar, editar, borrar)
+  $("#lista").addEventListener("click", async (e) => {
+    const boton = e.target.closest("button[data-accion]");
+    if (!boton) return;
+    const id = Number(boton.closest("li").dataset.id);
+    const t = tareas.find((x) => x.id === id);
+    const accion = boton.dataset.accion;
+
+    try {
+      if (accion === "alternar") {
+        await api(`/tareas/${id}`, { method: "PUT", body: JSON.stringify({
+          titulo: t.titulo, descripcion: t.descripcion, autor: t.autor, completada: !t.completada }) });
+        await cargar();
+      } else if (accion === "borrar") {
+        if (!confirm(`¿Borrar "${t.titulo}"?`)) return;
+        await api(`/tareas/${id}`, { method: "DELETE" });
+        avisar("Tarea borrada");
+        await cargar();
+      } else if (accion === "editar") {
+        editando = id; pintar();
+        document.querySelector(`li[data-id="${id}"] input[name="titulo"]`).focus();
+      } else if (accion === "cancelar") {
+        editando = null; pintar();
+      }
+    } catch (err) { avisar("Error: " + err.message, true); await cargar(); }
+  });
+
+  // Guardar edición
+  $("#lista").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const f = e.target;
+    const id = Number(f.closest("li").dataset.id);
+    const t = tareas.find((x) => x.id === id);
+    try {
+      await api(`/tareas/${id}`, { method: "PUT", body: JSON.stringify({
+        titulo: f.titulo.value.trim(),
+        descripcion: f.descripcion.value.trim() || null,
+        autor: f.autor.value.trim() || null,
+        completada: t.completada,
+      }) });
+      editando = null;
+      avisar("Cambios guardados");
+      await cargar();
+    } catch (err) { avisar("No se pudo guardar: " + err.message, true); }
+  });
+
+  // Filtros
+  document.querySelectorAll(".filtros button").forEach((b) => b.addEventListener("click", () => {
+    filtro = b.dataset.filtro;
+    document.querySelectorAll(".filtros button").forEach((x) => x.setAttribute("aria-pressed", x === b));
+    pintar();
+  }));
+
+  // Arranque
+  try { $("#autor").value = localStorage.getItem("autor") || ""; } catch {}
+  cargar();
+  setInterval(() => { if (editando === null) cargar(); }, REFRESCO_MS);
+</script>
+</body>
+</html>
